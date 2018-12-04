@@ -10,6 +10,7 @@
 import redis
 
 from proxypool.settings import REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_LIST_NAME
+from proxypool.errors import ProxyPoolEmptyError
 
 class RedisClient(object):
     '''
@@ -55,7 +56,7 @@ class RedisClient(object):
         try:
             return self._db.rpop(REDIS_LIST_NAME)
         except:
-            print("Error! when pop")
+            raise ProxyPoolEmptyError
 
     def get_for_test(self, num=1):
         """
