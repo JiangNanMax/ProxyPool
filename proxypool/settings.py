@@ -15,5 +15,7 @@ REDIS_LIST_NAME = 'proxies'
 User_Agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.99 Safari/537.36'
 HEADERS = {
     'User-Agent' : User_Agent,
+    'Accept-Encoding': 'gzip, deflate, sdch',
+    'Accept-Language': 'zh-CN,zh;q=0.8',
 }
 
