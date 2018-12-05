@@ -99,7 +99,7 @@ def test():
     print(redisClient.pop_for_use())
     print("After pop_for_use, the length is {}.".format(redisClient.list_len))
 
-    redisClient.flush()
+    #redisClient.flush()
     print("After flush, the length is {}.".format(redisClient.list_len))
 
 
