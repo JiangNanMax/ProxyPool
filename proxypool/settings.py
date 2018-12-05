@@ -19,3 +19,9 @@ HEADERS = {
     'Accept-Language': 'zh-CN,zh;q=0.8',
 }
 
+# 设置Flask服务
+FLASK_HOST = '0.0.0.0'
+FLASK_PORT = 5000
+DEBUG = True
+
+
