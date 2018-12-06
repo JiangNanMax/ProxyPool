@@ -24,4 +24,16 @@ FLASK_HOST = '0.0.0.0'
 FLASK_PORT = 5000
 DEBUG = True
 
+# 用于测试代理有效与否的链接
+TEST_PROXY = 'http://www.baidu.com'
+# 代理测试的时间上限(s)
+TEST_PROXY_TIMEOUT = 6
 
+# 代理池中代理ip数量的上限
+PROXYPOOL_UPPER_THRESHOLD = 200
+# 代理池中代理ip数量的下限
+PROXYPOOL_LOWER_THRESHOLD = 20
+# 代理池中代理ip数量检查周期(s)
+PROXYPOOL_LEN_CHECK_CYCLE = 30
+# 代理池中代理ip有效性检查周期(s)
+PROXY_VALID_CHECK_CYCLE = 60
