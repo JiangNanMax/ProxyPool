@@ -6,14 +6,16 @@
 # Date: 2018/12/6
 
 import time
+from multiprocessing import Process
 import asyncio
 import aiohttp
-from multiprocessing import Process
-from aiohttp import ClientConnectionError
-from proxypool.errors import ProxyResourceDepletionError
+from aiohttp import ClientProxyConnectionError as ProxyConnectionError,ServerDisconnectedError,ClientResponseError,\
+    ClientConnectorError
 from proxypool.db import RedisClient
+from proxypool.errors import ProxyResourceDepletionError
 from proxypool.crawler import FreeProxyCrawler
 from proxypool.settings import *
+from asyncio import TimeoutError
 
 
 class ValidtyTester(object):
@@ -28,21 +30,23 @@ class ValidtyTester(object):
         self._conn = RedisClient()
 
     async def test_single_proxy(self, proxy):
-        if isinstance(proxy, bytes):
-            proxy = proxy.decode('utf-8')
-
         try:
             async with aiohttp.ClientSession() as session:
                 try:
-                    async with session.get(url=self.test_proxy, proxy='http://{}'.format(proxy), timeout=TEST_PROXY_TIMEOUT) as response:
+                    if isinstance(proxy, bytes):
+                        proxy = proxy.decode('utf-8')
+                    real_proxy = 'https://' + proxy
+                    print('Testing', proxy)
+                    async with session.get(TEST_PROXY, proxy=real_proxy,
+                                        timeout=TEST_PROXY_TIMEOUT) as response:
                         if response.status == 200:
                             self._conn.put(proxy)
-                            print('Valid proxy: {}'.format(proxy))
-                except ClientConnectionError:
-                    print('Invalid proxy: {}'.format(proxy))
-
-        except ClientConnectionError as e:
-            print(e)
+                            print('Valid proxy', proxy)
+                except (ProxyConnectionError, TimeoutError, ValueError):
+                    print('Invalid proxy', proxy)
+        except (ServerDisconnectedError, ClientResponseError, ClientConnectorError) as s:
+            print(s)
+            pass
 
     def test_all_proxies(self):
         print("Running the ValidtyTester...")
@@ -50,7 +54,7 @@ class ValidtyTester(object):
             loop = asyncio.get_event_loop()
             tasks = [self.test_single_proxy(proxy) for proxy in self._raw_proxies]
             loop.run_until_complete(asyncio.wait(tasks))
-        except Exception:
+        except ValueError:
             print("Async error...")
 
 
@@ -99,7 +103,8 @@ class Scheduler(object):
             time.sleep(cycle)
 
     @staticmethod
-    def check_pool_len(lower_thershold=PROXYPOOL_LOWER_THRESHOLD, upper_threshold=PROXYPOOL_UPPER_THRESHOLD, cycle=PROXYPOOL_LEN_CHECK_CYCLE):
+    def check_pool_len(lower_thershold=PROXYPOOL_LOWER_THRESHOLD,
+                       upper_threshold=PROXYPOOL_UPPER_THRESHOLD, cycle=PROXYPOOL_LEN_CHECK_CYCLE):
         conn = RedisClient()
         adder = ProxyPoolAdder(upper_threshold)
         while True:
@@ -109,8 +114,8 @@ class Scheduler(object):
 
     def run(self):
         print("Running the scheduler...")
-        test_process = Process(target=Scheduler.test_proxies())
-        check_process = Process(target=Scheduler.check_pool_len())
+        test_process = Process(target=Scheduler.test_proxies)
+        check_process = Process(target=Scheduler.check_pool_len)
 
-        test_process.start()
         check_process.start()
+        test_process.start()
